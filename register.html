@@ -1,110 +1,90 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Card Register - MVP</title>
-<style>
-  body {
-    font-family: sans-serif;
-    margin: 0;
-    background: #f6f7f8;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>カードを追加</title>
 
-  .container {
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 16px;
-  }
-
-  h2 {
-    font-size: 18px;
-    margin-bottom: 12px;
-  }
-
-  label {
-    font-size: 14px;
-    margin-top: 20px;
-    display: block;
-  }
-
-  input, textarea {
-    width: 100%;
-    padding: 8px;
-    font-size: 15px;
-    margin-top: 4px;
-    box-sizing: border-box;
-  }
-
-  .btn {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    text-align: center;
-    background: #1976d2;
-    color: #fff;
-    border-radius: 6px;
-    margin-top: 20px;
-    text-decoration: none;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  .btn-back {
-    background: #999;
-    margin-top: 12px;
-  }
-</style>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .card-item {
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn {
+      background: #007aff;
+      color: white;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
-  <div class="container">
-    <h2>カード新規登録</h2>
+  <h2>カード登録</h2>
 
-    <label>カード名</label>
-    <input id="name" placeholder="例：楽天カード" />
+  <div id="cardList"></div>
 
-    <label>基本還元率</label>
-    <input id="baseRate" placeholder="例：1.0%" />
-
-    <label>特に還元率が高いサービス</label>
-    <textarea id="best" rows="3" placeholder="例：楽天市場で3.0%"></textarea>
-
-    <button class="btn" onclick="saveCard()">登録</button>
-    <a class="btn btn-back" href="index.html">戻る</a>
-  </div>
+  <button onclick="location.href='index.html'">戻る</button>
 
 <script>
-// 保存
-function saveCard() {
-  const name = document.getElementById("name").value.trim();
-  const baseRate = document.getElementById("baseRate").value.trim();
-  const best = document.getElementById("best").value.trim();
+  const CARD_DATA_URL = "./card_data/cards.json";
 
-  if (!name) {
-    alert("カード名を入力してください");
-    return;
+  function loadMyCards() {
+    return JSON.parse(localStorage.getItem("myCards") ?? "[]");
   }
 
-  // localStorageから既存データ取得
-  const exist = JSON.parse(localStorage.getItem("cards")) || [];
+  function saveMyCards(arr) {
+    localStorage.setItem("myCards", JSON.stringify(arr));
+  }
 
-  // ID生成
-  const id = "c_" + Date.now();
+  function addCard(cardId) {
+    let myCards = loadMyCards();
+    if (!myCards.includes(cardId)) {
+      myCards.push(cardId);
+      saveMyCards(myCards);
+      alert("カードを追加しました！");
+    } else {
+      alert("既に追加済みです");
+    }
+  }
 
-  const newCard = {
-    id,
-    name,
-    baseRate,
-    best,
-  };
+  async function loadCards() {
+    const res = await fetch(CARD_DATA_URL);
+    const json = await res.json();
 
-  // 保存
-  exist.push(newCard);
-  localStorage.setItem("cards", JSON.stringify(exist));
+    render(json.cards);
+  }
 
-  alert("登録しました！");
-  location.href = "index.html";
-}
+  function render(cards) {
+    const container = document.getElementById("cardList");
+    container.innerHTML = "";
+
+    cards.forEach(c => {
+      const div = document.createElement("div");
+      div.className = "card-item";
+
+      div.innerHTML = `
+        <div>
+          <strong>${c.name}</strong><br>
+          通常還元率：${c.base_rate}%
+        </div>
+        <button class="btn" onclick="addCard('${c.id}')">追加</button>
+      `;
+
+      container.appendChild(div);
+    });
+  }
+
+  loadCards();
 </script>
+
 </body>
 </html>

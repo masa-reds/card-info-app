@@ -78,22 +78,53 @@
   </div>
 
 <script>
-  const CARD_DATA_URL = "./card_data/cards.json";   // ← JSONファイルの場所
+  const CARD_DATA_URL = "./card_data/cards.json";   // JSONファイル
 
+  // ▼ LocalStorageから所持カードを取得
+  function loadMyCards() {
+    return JSON.parse(localStorage.getItem("myCards") ?? "[]");
+  }
+
+  // ▼ LocalStorageに保存
+  function saveMyCards(arr) {
+    localStorage.setItem("myCards", JSON.stringify(arr));
+  }
+
+  // ▼削除処理
+  function removeCard(cardId) {
+    let myCards = loadMyCards();
+    myCards = myCards.filter(id => id !== cardId);
+    saveMyCards(myCards);
+    loadCards();   // 再描画
+  }
+
+  // ▼カード読み込み
   async function loadCards() {
     try {
       const res = await fetch(CARD_DATA_URL);
       const json = await res.json();
 
-      renderCards(json.cards);
+      const allCards = json.cards;
+      const myCardIds = loadMyCards();
+
+      // 所持カードだけに絞る
+      const myCards = allCards.filter(card => myCardIds.includes(card.id));
+
+      renderCards(myCards);
     } catch (e) {
       console.error("カード情報の読み込みに失敗しました", e);
     }
   }
 
+  // ▼描画
   function renderCards(cards) {
     const container = document.getElementById("cardList");
     container.innerHTML = "";
+
+    if (cards.length === 0) {
+      container.innerHTML = "<p>カードが登録されていません</p>";
+      return;
+    }
 
     cards.forEach(card => {
       const specialListHtml = card.special_rates
@@ -110,7 +141,11 @@
           <div class="highlight">特別還元：</div>
           <div class="special-list">${specialListHtml}</div>
         </div>
-        <button class="btn" onclick="goDetail('${card.id}')">></button>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn" onclick="goDetail('${card.id}')">詳細</button>
+          <button class="btn" style="background:#b00020" onclick="removeCard('${card.id}')">削除</button>
+        </div>
       `;
 
       container.appendChild(div);
