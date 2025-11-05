@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>おすすめカード検索</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      max-width: 450px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.15);
+    }
+
+    select, button {
+      width: 100%;
+      padding: 10px;
+      margin: 6px 0 16px;
+      font-size: 16px;
+    }
+
+    button {
+      background: black;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      opacity: 0.8;
+    }
+
+    .result-card {
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-top: 10px;
+      background: #fff;
+    }
+
+    .card-name {
+      font-weight: bold;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>おすすめカード検索</h2>
+
+    <!-- ▼カテゴリ選択 -->
+    <label>カテゴリ</label>
+    <select id="category">
+      <option value="">選択してください</option>
+      <option value="コンビニ">コンビニ</option>
+      <option value="飲食">飲食</option>
+      <option value="ドラッグストア">ドラッグストア</option>
+    </select>
+
+    <!-- ▼店舗選択 -->
+    <label>店舗</label>
+    <select id="store">
+      <option value="">選択してください</option>
+      <option value="セブン">セブン</option>
+      <option value="ローソン">ローソン</option>
+      <option value="マクドナルド">マクドナルド</option>
+      <option value="スギ薬局">スギ薬局</option>
+    </select>
+
+    <button onclick="search()">SEARCH</button>
+
+    <h3>検索結果</h3>
+    <div id="result"></div>
+  </div>
+
+<script>
+  // ▼ 仮データ（カテゴリ×店舗）
+  const recommendData = [
+    {category: "コンビニ", store: "セブン", card: "セゾンカード", rate: "5%"},
+    {category: "コンビニ", store: "ローソン", card: "JCBカードW", rate: "3%"},
+    {category: "飲食",   store: "マクドナルド", card: "Visa LINE Pay", rate: "3%"},
+    {category: "ドラッグストア", store: "スギ薬局", card: "楽天カード", rate: "2%"}
+  ];
+
+  function search() {
+    const category = document.getElementById("category").value;
+    const store = document.getElementById("store").value;
+    const resultDom = document.getElementById("result");
+    resultDom.innerHTML = "";
+
+    if (!category || !store) {
+      resultDom.innerHTML = "<p>カテゴリと店舗を選択してください。</p>";
+      return;
+    }
+
+    const match = recommendData.filter(
+      item => item.category === category && item.store === store
+    );
+
+    if (match.length === 0) {
+      resultDom.innerHTML = "<p>データがありません。</p>";
+      return;
+    }
+
+    match.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "result-card";
+      div.innerHTML = `
+        <div class="card-name"></div>
+        <div>還元率: <b></b></div>
+      `;
+      resultDom.appendChild(div);
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+{
+  "cards": [
+    {
+      "id": "rakuten-card",
+      "name": "楽天カード",
+      "rank": "normal",
+      "base_rate": 1.0,
+      "special_rates": [
+        {
+          "store": "楽天市場",
+          "condition": "楽天会員",
+          "rate": 3.0
+        },
+        {
+          "store": "セブンイレブン",
+          "condition": "1000円以上",
+          "rate": 5.0
+        }
+      ],
+      "url": "https://www.rakuten-card.co.jp/"
+    },
+    {
+      "id": "rakuten-gold-card",
+      "name": "楽天ゴールドカード",
+      "rank": "gold",
+      "base_rate": 1.0,
+      "special_rates": [
+        {
+          "store": "楽天市場",
+          "condition": "ゴールド会員",
+          "rate": 4.0
+        }
+      ],
+      "url": "https://www.rakuten-card.co.jp/"
+    },
+    {
+      "id": "yodobashi-card",
+      "name": "ヨドバシゴールドポイントカード",
+      "rank": "normal",
+      "base_rate": 1.0,
+      "special_rates": [
+        {
+          "store": "ヨドバシカメラ",
+          "condition": "店舗 / オンライン",
+          "rate": 10.0
+        }
+      ],
+      "url": "https://www.yodobashi.com/"
+    },
+    {
+      "id": "mitsui-sumitomo-gold-nl",
+      "name": "三井住友カード ゴールド(NL)",
+      "rank": "gold",
+      "base_rate": 1.0,
+      "special_rates": [
+        {
+          "store": "コンビニ3社/マクドナルド",
+          "condition": "NLタッチ決済",
+          "rate": 5.0
+        }
+      ],
+      "url": "https://www.smbc-card.com/"
+    },
+    {
+      "id": "amex-gold",
+      "name": "アメックス・ゴールド",
+      "rank": "gold",
+      "base_rate": 1.0,
+      "special_rates": [
+        {
+          "store": "対象レストラン",
+          "condition": "特典: コース1名分無料",
+          "rate": 0.0
+        }
+      ],
+      "url": "https://www.americanexpress.com/jp/"
+    },
+    {
+      "id": "amex-platinum",
+      "name": "アメックス・プラチナ",
+      "rank": "platinum",
+      "base_rate": 1.0,
+      "special_rates": [
+        {
+          "store": "対象レストラン",
+          "condition": "特典: コース1名分無料",
+          "rate": 0.0
+        },
+        {
+          "store": "ホテル",
+          "condition": "上級会員ステータス",
+          "rate": 0.0
+        }
+      ],
+      "url": "https://www.americanexpress.com/jp/"
+    }
+  ]
+}

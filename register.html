@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Card Register - MVP</title>
+<style>
+  body {
+    font-family: sans-serif;
+    margin: 0;
+    background: #f6f7f8;
+  }
+
+  .container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  label {
+    font-size: 14px;
+    margin-top: 20px;
+    display: block;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 8px;
+    font-size: 15px;
+    margin-top: 4px;
+    box-sizing: border-box;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    text-align: center;
+    background: #1976d2;
+    color: #fff;
+    border-radius: 6px;
+    margin-top: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .btn-back {
+    background: #999;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h2>カード新規登録</h2>
+
+    <label>カード名</label>
+    <input id="name" placeholder="例：楽天カード" />
+
+    <label>基本還元率</label>
+    <input id="baseRate" placeholder="例：1.0%" />
+
+    <label>特に還元率が高いサービス</label>
+    <textarea id="best" rows="3" placeholder="例：楽天市場で3.0%"></textarea>
+
+    <button class="btn" onclick="saveCard()">登録</button>
+    <a class="btn btn-back" href="index.html">戻る</a>
+  </div>
+
+<script>
+// 保存
+function saveCard() {
+  const name = document.getElementById("name").value.trim();
+  const baseRate = document.getElementById("baseRate").value.trim();
+  const best = document.getElementById("best").value.trim();
+
+  if (!name) {
+    alert("カード名を入力してください");
+    return;
+  }
+
+  // localStorageから既存データ取得
+  const exist = JSON.parse(localStorage.getItem("cards")) || [];
+
+  // ID生成
+  const id = "c_" + Date.now();
+
+  const newCard = {
+    id,
+    name,
+    baseRate,
+    best,
+  };
+
+  // 保存
+  exist.push(newCard);
+  localStorage.setItem("cards", JSON.stringify(exist));
+
+  alert("登録しました！");
+  location.href = "index.html";
+}
+</script>
+</body>
+</html>

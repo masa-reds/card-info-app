@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>カード一覧</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      max-width: 450px;
+      margin: 0 auto;
+    }
+    .card-item {
+      background: white;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .name {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .highlight {
+      font-size: 14px;
+      color: #444;
+    }
+    .btn {
+      background: black;
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn:hover {
+      opacity: 0.85;
+    }
+    .register-btn {
+      width: 100%;
+      margin-top: 24px;
+      background: #007aff;
+    }
+    .special-list {
+      margin-top: 4px;
+      font-size: 14px;
+      padding-left: 12px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>登録カード一覧</h2>
+
+    <!-- ▼ここにカードリストが入る -->
+    <div id="cardList"></div>
+
+    <!-- ▼カード登録画面へ -->
+    <button class="btn register-btn" onclick="location.href='register.html'">
+      新規登録
+    </button>
+  </div>
+
+<script>
+  // ▼仮カードデータ（MVP）
+  const cards = [
+    {
+      name: "セゾンカード",
+      normalRate: "0.5%",
+      special: [
+        { category: "セブンイレブン", condition: "1000円以上", rate: "5%" },
+        { category: "ドラッグストア", condition: "1000円以上", rate: "7%" }
+      ],
+    },
+    {
+      name: "paypayカード",
+      normalRate: "0.5%",
+      special: [
+        { category: "どこでも", condition: "paypay後払い", rate: " 1%" }
+      ],
+    },
+    {
+      name: "ヨドバシカード",
+      normalRate: "1.0%",
+      special: [
+        { category: "ヨドバシカメラ", condition: "元々10%還元の場合", rate: "13%" }
+      ],
+    }
+  ];
+
+  function renderCards() {
+    const container = document.getElementById("cardList");
+    container.innerHTML = "";
+
+    cards.forEach(card => {
+      const specialListHtml = card.special
+        .map(s => `・${s.category}（${s.condition}）：${s.rate}`)
+        .join("<br>");
+
+      const div = document.createElement("div");
+      div.className = "card-item";
+
+      div.innerHTML = `
+        <div class="info">
+          <div class="name">${card.name}</div>
+          <div class="highlight">通常還元率：${card.normalRate}</div>
+          <div class="highlight">特別還元：</div>
+          <div class="special-list">${specialListHtml}</div>
+        </div>
+        <button class="btn" onclick="goDetail('${card.name}')">></button>
+      `;
+
+      container.appendChild(div);
+    });
+  }
+
+  function goDetail(name) {
+    location.href = "register.html?name=" + encodeURIComponent(name);
+  }
+
+  renderCards();
+</script>
+
+</body>
+</html>
