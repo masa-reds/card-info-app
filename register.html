@@ -4,207 +4,183 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>カード登録</title>
-
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
       background: #f5f5f5;
     }
-
     .container {
-      max-width: 500px;
+      max-width: 600px;
       margin: 0 auto;
     }
-
-    .section-title {
-      font-size: 20px;
-      margin-top: 24px;
-      margin-bottom: 12px;
-      font-weight: bold;
-    }
-
     .card-item {
-      padding: 12px;
-      margin-bottom: 10px;
       background: white;
       border-radius: 6px;
-      border: 1px solid #ccc;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      opacity: 1;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.1);
     }
-
-    .owned {
-      opacity: 0.4;
-    }
-
+    .name { font-weight: bold; font-size: 18px; }
     .btn {
       background: black;
       color: white;
       border: none;
-      padding: 6px 10px;
+      padding: 8px 12px;
       border-radius: 4px;
       cursor: pointer;
-    }
-
-    .btn:hover {
-      opacity: 0.85;
-    }
-
-    .back-btn {
-      margin-top: 20px;
-      width: 100%;
-      background: #444;
-    }
-
-    .custom-form {
-      background: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    input {
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 8px;
       font-size: 14px;
     }
+    .btn:hover { opacity: 0.85; }
+    .section-title { margin-top: 24px; font-size: 20px; font-weight: bold; }
   </style>
 </head>
-
 <body>
   <div class="container">
-
     <h2>カード登録</h2>
 
-    <!-- ▼自作カードフォーム -->
-    <div class="section-title">手動で登録（3枚まで）</div>
+    <h3 class="section-title">既存カード一覧（cards.json）</h3>
+    <div id="existingCards"></div>
 
-    <div id="customForm" class="custom-form">
-      <input id="customName" placeholder="カード名" />
-      <input id="customBaseRate" placeholder="通常還元率（%）" type="number" />
-      <button class="btn" onclick="addCustomCard()">追加</button>
-      <div id="customError" style="color:red; margin-top:8px;"></div>
-    </div>
+    <h3 class="section-title">手動カード登録</h3>
+    <form id="manualForm">
+      <label>ID: <input type="text" id="m_id" required /></label><br>
+      <label>名前: <input type="text" id="m_name" required /></label><br>
+      <label>ランク: 
+        <select id="m_rank">
+          <option value="normal">normal</option>
+          <option value="gold">gold</option>
+          <option value="platinum">platinum</option>
+        </select>
+      </label><br>
+      <label>通常還元率(%): <input type="number" id="m_base" required /></label><br>
+      <label>公式URL: <input type="url" id="m_url" /></label><br>
 
-    <!-- ▼既存カード -->
-    <div class="section-title">既存カードから選択</div>
-    <div id="masterCardList"></div>
+      <div>
+        <strong>特別還元</strong>
+        <div id="specialRates"></div>
+        <button type="button" onclick="addSpecialRate()">＋特典を追加</button>
+      </div>
 
-    <button class="btn back-btn" onclick="location.href='index.html'">
-      戻る
-    </button>
+      <button type="submit" class="btn">手動カードを登録</button>
+    </form>
+
+    <button class="btn" style="margin-top:20px" onclick="location.href='index.html'">戻る</button>
   </div>
 
 <script>
-  const CARD_DATA_URL = "./card_data/cards.json";
+const CARD_DATA_URL = "./card_data/cards.json";
 
-  /* LocalStorage utils */
-  const getOwnedIds = () =>
-    JSON.parse(localStorage.getItem("ownedCardIds") || "[]");
+function getLocal() {
+  return JSON.parse(localStorage.getItem("owned_cards") || "[]");
+}
 
-  const setOwnedIds = (ids) =>
-    localStorage.setItem("ownedCardIds", JSON.stringify(ids));
+function setLocal(data) {
+  localStorage.setItem("owned_cards", JSON.stringify(data));
+}
 
-  const getCustomCards = () =>
-    JSON.parse(localStorage.getItem("customCards") || "[]");
-
-  const setCustomCards = (cards) =>
-    localStorage.setItem("customCards", JSON.stringify(cards));
-
-  /* JSON load */
-  async function loadData() {
+async function loadExistingCards() {
+  try {
     const res = await fetch(CARD_DATA_URL);
     const json = await res.json();
-    return json.cards;
+    renderExisting(json.cards);
+  } catch(e) {
+    console.error(e);
   }
+}
 
-  /** ▼自作カードの追加 */
-  function addCustomCard() {
-    const name = document.getElementById("customName").value.trim();
-    const baseRate = Number(document.getElementById("customBaseRate").value);
+function renderExisting(cards) {
+  const owned = getLocal();
+  const container = document.getElementById("existingCards");
+  container.innerHTML = "";
 
-    const error = document.getElementById("customError");
-    error.textContent = "";
+  cards.forEach(card => {
+    const isOwned = owned.includes(card.id);
+    const div = document.createElement("div");
+    div.className = "card-item";
 
-    if (!name || isNaN(baseRate)) {
-      error.textContent = "入力が不足しています。";
-      return;
-    }
+    const specials = card.special_rates?.map(s => `・${s.store}（${s.condition}）：${s.rate}%`).join("<br>") ?? "特典なし";
 
-    const owned = getOwnedIds();
-    const custom = getCustomCards();
+    div.innerHTML = `
+      <div class="name">${card.name}</div>
+      <div>ランク：${card.rank}</div>
+      <div>通常還元率：${card.base_rate}%</div>
+      <div>特別還元：<br>${specials}</div>
+      <a href="${card.url}" target="_blank">公式サイト</a><br><br>
+      <button class="btn" ${isOwned ? "disabled" : ""} onclick="addExisting('${card.id}')">
+        ${isOwned ? "登録済" : "追加"}
+      </button>
+    `;
 
-    if (custom.length >= 3) {
-      error.textContent = "自作カードは3枚までです。";
-      return;
-    }
+    container.appendChild(div);
+  });
+}
 
-    // 既存カード名と重複チェック
-    const id = "custom_" + Date.now();
-
-    custom.push({
-      id,
-      name,
-      base_rate: baseRate,
-      special_rates: [],
-    });
-
-    setCustomCards(custom);
-
-    // 所持扱いとしてID追加
+function addExisting(id) {
+  const owned = getLocal();
+  if (!owned.includes(id)) {
     owned.push(id);
-    setOwnedIds(owned);
+    setLocal(owned);
+    loadExistingCards();
+  }
+}
 
-    alert("登録しました");
-    location.reload();
+let specialIndex = 0;
+function addSpecialRate() {
+  const wrap = document.getElementById("specialRates");
+  const div = document.createElement("div");
+  div.innerHTML = `
+    <label>店: <input type="text" id="s_store_${specialIndex}" required></label>
+    <label>条件: <input type="text" id="s_cond_${specialIndex}" required></label>
+    <label>還元率(%): <input type="number" id="s_rate_${specialIndex}" required></label>
+    <br>
+  `;
+  wrap.appendChild(div);
+  specialIndex++;
+}
+
+// 手動登録
+const manualForm = document.getElementById("manualForm");
+manualForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  let owned = getLocal();
+  let manual = JSON.parse(localStorage.getItem("manual_cards") || "[]");
+  if (manual.length >= 3) {
+    alert("手動登録は3枚までです");
+    return;
   }
 
-  /** ▼既存カードを表示 */
-  async function renderMasterCards() {
-    const list = document.getElementById("masterCardList");
-    list.innerHTML = "";
+  const m = {
+    id: document.getElementById("m_id").value,
+    name: document.getElementById("m_name").value,
+    rank: document.getElementById("m_rank").value,
+    base_rate: Number(document.getElementById("m_base").value),
+    url: document.getElementById("m_url").value,
+    special_rates: []
+  };
 
-    const master = await loadData();
-    const owned = getOwnedIds();
-    const custom = getCustomCards();
-
-    const allOwnedIds = [...owned, ...custom.map(c => c.id)];
-
-    master.forEach(card => {
-      const div = document.createElement("div");
-      const isOwned = allOwnedIds.includes(card.id);
-      div.className = "card-item" + (isOwned ? " owned" : "");
-
-      div.innerHTML = `
-        <span>${card.name}（${card.base_rate}%）</span>
-        ${
-          isOwned
-            ? `<button class="btn" disabled>登録済</button>`
-            : `<button class="btn" onclick="addExistingCard('${card.id}')">追加</button>`
-        }
-      `;
-      list.appendChild(div);
+  for(let i = 0; i < specialIndex; i++){
+    const sStore = document.getElementById(`s_store_${i}`);
+    if(!sStore) continue;
+    m.special_rates.push({
+      store: sStore.value,
+      condition: document.getElementById(`s_cond_${i}`).value,
+      rate: Number(document.getElementById(`s_rate_${i}`).value)
     });
   }
 
-  /** ▼既存カード追加 */
-  function addExistingCard(id) {
-    const owned = getOwnedIds();
-    if (owned.includes(id)) return;
+  manual.push(m);
+  localStorage.setItem("manual_cards", JSON.stringify(manual));
 
-    owned.push(id);
-    setOwnedIds(owned);
+  owned.push(m.id);
+  setLocal(owned);
 
-    alert("登録しました");
-    location.reload();
-  }
+  alert("登録しました");
+  manualForm.reset();
+});
 
-  renderMasterCards();
+loadExistingCards();
 </script>
-
 </body>
 </html>
