@@ -78,40 +78,27 @@
   </div>
 
 <script>
-  // ▼仮カードデータ（MVP）
-  const cards = [
-    {
-      name: "セゾンカード",
-      normalRate: "0.5%",
-      special: [
-        { category: "セブンイレブン", condition: "1000円以上", rate: "5%" },
-        { category: "ドラッグストア", condition: "1000円以上", rate: "7%" }
-      ],
-    },
-    {
-      name: "paypayカード",
-      normalRate: "0.5%",
-      special: [
-        { category: "どこでも", condition: "paypay後払い", rate: " 1%" }
-      ],
-    },
-    {
-      name: "ヨドバシカード",
-      normalRate: "1.0%",
-      special: [
-        { category: "ヨドバシカメラ", condition: "元々10%還元の場合", rate: "13%" }
-      ],
-    }
-  ];
+  const CARD_DATA_URL = "./card_data/cards.json";   // ← JSONファイルの場所
 
-  function renderCards() {
+  async function loadCards() {
+    try {
+      const res = await fetch(CARD_DATA_URL);
+      const json = await res.json();
+
+      renderCards(json.cards);
+    } catch (e) {
+      console.error("カード情報の読み込みに失敗しました", e);
+    }
+  }
+
+  function renderCards(cards) {
     const container = document.getElementById("cardList");
     container.innerHTML = "";
 
     cards.forEach(card => {
-      const specialListHtml = card.special
-        .map(s => `・${s.category}（${s.condition}）：${s.rate}`)
-        .join("<br>");
+      const specialListHtml = card.special_rates
+        ?.map(s => `・${s.store}（${s.condition}）：${s.rate}%`)
+        .join("<br>") ?? "（特別還元なし）";
 
       const div = document.createElement("div");
       div.className = "card-item";
@@ -119,22 +106,22 @@
       div.innerHTML = `
         <div class="info">
           <div class="name">${card.name}</div>
-          <div class="highlight">通常還元率：${card.normalRate}</div>
+          <div class="highlight">通常還元率：${card.base_rate}%</div>
           <div class="highlight">特別還元：</div>
           <div class="special-list">${specialListHtml}</div>
         </div>
-        <button class="btn" onclick="goDetail('${card.name}')">></button>
+        <button class="btn" onclick="goDetail('${card.id}')">></button>
       `;
 
       container.appendChild(div);
     });
   }
 
-  function goDetail(name) {
-    location.href = "register.html?name=" + encodeURIComponent(name);
+  function goDetail(id) {
+    location.href = "register.html?id=" + encodeURIComponent(id);
   }
 
-  renderCards();
+  loadCards();
 </script>
 
 </body>
