@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>カード詳細</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      margin-top: 16px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .btn {
+      background: black;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+
+    .btn:hover {
+      opacity: 0.8;
+    }
+
+    .disabled {
+      background: gray;
+      cursor: default;
+      opacity: 0.6;
+    }
+
+    .rate-box {
+      margin-top: 12px;
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    .back-btn {
+      margin-top: 24px;
+      width: 100%;
+    }
+
+    .row {
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id="cardDetail"></div>
+    <button class="btn back-btn" onclick="history.back()">戻る</button>
+  </div>
+
+<script>
+  const CARD_DATA_URL = "./card_data/cards.json";
+
+  /* LocalStorage utils */
+  const getOwnedIds = () =>
+    JSON.parse(localStorage.getItem("ownedCardIds") || "[]");
+
+  const setOwnedIds = (ids) =>
+    localStorage.setItem("ownedCardIds", JSON.stringify(ids));
+
+  const getCustomCards = () =>
+    JSON.parse(localStorage.getItem("customCards") || "[]");
+
+  /** URLクエリからid取得 */
+  function getParam(name) {
+    return new URL(location.href).searchParams.get(name);
+  }
+
+  /** カード検索 */
+  async function getCardData(cardId) {
+    // customCards から探す
+    const custom = getCustomCards();
+    const userCard = custom.find(c => c.id === cardId);
+    if (userCard) return userCard;
+
+    // cards.json から探す
+    const res = await fetch(CARD_DATA_URL);
+    const json = await res.json();
+    return json.cards.find(c => c.id === cardId);
+  }
+
+  /** 所持状態切り替え */
+  function toggleOwn(cardId) {
+    const owned = getOwnedIds();
+    const idx = owned.indexOf(cardId);
+
+    if (idx >= 0) {
+      owned.splice(idx, 1);
+    } else {
+      owned.push(cardId);
+    }
+    setOwnedIds(owned);
+    render();
+  }
+
+  /** 描画 */
+  async function render() {
+    const cardId = getParam("id");
+    const data = await getCardData(cardId);
+
+    const owned = getOwnedIds();
+    const isOwned = owned.includes(cardId);
+
+    const dom = document.getElementById("cardDetail");
+
+    if (!data) {
+      dom.innerHTML = `<p>該当カードが見つかりません</p>`;
+      return;
+    }
+
+    dom.innerHTML = `
+      <div class="title">${data.name}</div>
+
+      <div class="row">還元率：${data.base_rate}%</div>
+      ${data.rank ? `<div class="row">ランク：${data.rank}</div>` : ""}
+
+      <button class="btn" onclick="toggleOwn('${data.id}')">
+        ${isOwned ? "所持 → 削除" : "所持に追加"}
+      </button>
+
+      ${
+        data.url
+          ? `<button class="btn" onclick="location.href='${data.url}'">公式サイト</button>`
+          : ""
+      }
+
+      <div class="section-title">特典・条件</div>
+      ${
+        data.special_rates?.length
+          ? data.special_rates
+              .map(
+                r => `
+          <div class="rate-box">
+            <div>店舗：${r.store}</div>
+            <div>条件：${r.condition}</div>
+            <div>還元率：${r.rate}%</div>
+          </div>
+        `
+              )
+              .join("")
+          : "<p>（なし）</p>"
+      }
+    `;
+  }
+
+  render();
+</script>
+
+</body>
+</html>

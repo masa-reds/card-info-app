@@ -12,7 +12,7 @@
       background: #f5f5f5;
     }
     .container {
-      max-width: 450px;
+      max-width: 500px;
       margin: 0 auto;
     }
     .card-item {
@@ -24,8 +24,10 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
     .info {
+      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -42,13 +44,16 @@
       background: black;
       color: white;
       border: none;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 14px;
     }
     .btn:hover {
       opacity: 0.85;
+    }
+    .delete-btn {
+      background: #c00;
     }
     .register-btn {
       width: 100%;
@@ -66,97 +71,100 @@
 
 <body>
   <div class="container">
-    <h2>登録カード一覧</h2>
+    <h2>所持カード一覧</h2>
 
-    <!-- ▼ここにカードリストが入る -->
+    <!-- ▼カード表示部 -->
     <div id="cardList"></div>
 
     <!-- ▼カード登録画面へ -->
     <button class="btn register-btn" onclick="location.href='register.html'">
-      新規登録
+      カードを登録
     </button>
   </div>
 
+
 <script>
-  const CARD_DATA_URL = "./card_data/cards.json";   // JSONファイル
+  const CARD_DATA_URL = "./card_data/cards.json";   // JSONの場所
 
-  // ▼ LocalStorageから所持カードを取得
-  function loadMyCards() {
-    return JSON.parse(localStorage.getItem("myCards") ?? "[]");
+  async function loadData() {
+    const res = await fetch(CARD_DATA_URL);
+    const json = await res.json();
+    return json.cards;
   }
 
-  // ▼ LocalStorageに保存
-  function saveMyCards(arr) {
-    localStorage.setItem("myCards", JSON.stringify(arr));
+  /** LocalStorage: 所持カードID */
+  function getOwnedIds() {
+    return JSON.parse(localStorage.getItem("ownedCardIds") || "[]");
   }
 
-  // ▼削除処理
-  function removeCard(cardId) {
-    let myCards = loadMyCards();
-    myCards = myCards.filter(id => id !== cardId);
-    saveMyCards(myCards);
-    loadCards();   // 再描画
+  /** LocalStorage: 自作カード（フルデータ） */
+  function getCustomCards() {
+    return JSON.parse(localStorage.getItem("customCards") || "[]");
   }
 
-  // ▼カード読み込み
-  async function loadCards() {
-    try {
-      const res = await fetch(CARD_DATA_URL);
-      const json = await res.json();
+  /** LocalStorage: 削除 */
+  function removeOwnedCard(id) {
+    let ids = getOwnedIds();
+    ids = ids.filter(x => x !== id);
+    localStorage.setItem("ownedCardIds", JSON.stringify(ids));
 
-      const allCards = json.cards;
-      const myCardIds = loadMyCards();
+    let custom = getCustomCards();
+    custom = custom.filter(c => c.id !== id);
+    localStorage.setItem("customCards", JSON.stringify(custom));
 
-      // 所持カードだけに絞る
-      const myCards = allCards.filter(card => myCardIds.includes(card.id));
-
-      renderCards(myCards);
-    } catch (e) {
-      console.error("カード情報の読み込みに失敗しました", e);
-    }
+    render();
   }
 
-  // ▼描画
-  function renderCards(cards) {
+  function renderCard(card) {
+    const specialListHtml =
+      card.special_rates?.map(s => `・${s.store}（${s.condition}）：${s.rate}%`).join("<br>")
+      ?? "（特別還元なし）";
+
+    const div = document.createElement("div");
+    div.className = "card-item";
+
+    div.innerHTML = `
+      <div class="info">
+        <div class="name">${card.name}</div>
+        <div class="highlight">通常還元率：${card.base_rate}%</div>
+        <div class="highlight">特別還元：</div>
+        <div class="special-list">${specialListHtml}</div>
+      </div>
+
+      <button class="btn" onclick="location.href='detail.html?id=${encodeURIComponent(card.id)}'">
+        詳細
+      </button>
+      <button class="btn delete-btn" onclick="removeOwnedCard('${card.id}')">
+        削除
+      </button>
+    `;
+
+    return div;
+  }
+
+  /** メイン描画 */
+  async function render() {
     const container = document.getElementById("cardList");
     container.innerHTML = "";
 
-    if (cards.length === 0) {
-      container.innerHTML = "<p>カードが登録されていません</p>";
-      return;
+    const masterCards = await loadData();
+    const ownedIds = getOwnedIds();
+    const customCards = getCustomCards();
+
+    // マスターにあるカード
+    masterCards
+      .filter(c => ownedIds.includes(c.id))
+      .forEach(card => container.appendChild(renderCard(card)));
+
+    // 手動カード
+    customCards.forEach(card => container.appendChild(renderCard(card)));
+
+    if (container.innerHTML === "") {
+      container.innerHTML = "<p>登録されたカードはありません。</p>";
     }
-
-    cards.forEach(card => {
-      const specialListHtml = card.special_rates
-        ?.map(s => `・${s.store}（${s.condition}）：${s.rate}%`)
-        .join("<br>") ?? "（特別還元なし）";
-
-      const div = document.createElement("div");
-      div.className = "card-item";
-
-      div.innerHTML = `
-        <div class="info">
-          <div class="name">${card.name}</div>
-          <div class="highlight">通常還元率：${card.base_rate}%</div>
-          <div class="highlight">特別還元：</div>
-          <div class="special-list">${specialListHtml}</div>
-        </div>
-
-        <div style="display:flex; gap:8px;">
-          <button class="btn" onclick="goDetail('${card.id}')">詳細</button>
-          <button class="btn" style="background:#b00020" onclick="removeCard('${card.id}')">削除</button>
-        </div>
-      `;
-
-      container.appendChild(div);
-    });
   }
 
-  function goDetail(id) {
-    location.href = "register.html?id=" + encodeURIComponent(id);
-  }
-
-  loadCards();
+  render();
 </script>
 
 </body>
